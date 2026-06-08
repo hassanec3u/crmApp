@@ -33,6 +33,15 @@ enum Role {
   AGENT
 }
 
+/// Type de tâche / rappel commercial.
+enum TaskType {
+  RAPPEL
+  RELANCE
+  RDV
+  VERIFICATION
+  SUIVI
+}
+
 /// Type d'action enregistrée dans l'historique d'un prospect.
 enum HistoriqueType {
   CALL
@@ -210,6 +219,7 @@ model Prospect {
 /// Tâche / rappel rattaché à un prospect (rappeler, visite, relance…).
 model Task {
   id          String   @id @default(cuid())
+  type        TaskType @default(RAPPEL)
   titre       String
   commentaire String?  @db.Text
   /// Date (jour) à laquelle la tâche doit être réalisée.
@@ -228,6 +238,7 @@ model Task {
   updatedAt DateTime @updatedAt
 
   @@index([assignedUserId, fait, date])
+  @@index([assignedUserId, type, date])
   @@index([prospectId])
 }
 

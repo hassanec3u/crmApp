@@ -9,6 +9,8 @@ import { notFound, redirect } from "next/navigation";
 import { Pencil, ArrowLeft } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
+import { canViewAllTasks } from "@/lib/queries/tasks";
+import { getAssignableUsers } from "@/lib/queries/users";
 import { requireSession } from "@/lib/session";
 import {
   getProspectById,
@@ -40,11 +42,14 @@ export default async function ProspectPage({
   const session = await requireSession().catch(() => null);
   if (!session) redirect("/login");
 
-  const [prospect, statuts, tags] = await Promise.all([
+  const [prospect, statuts, tags, users] = await Promise.all([
     getProspectById(params.id, session.user.id),
     getUserStatuts(session.user.id),
     getUserTags(session.user.id),
+    getAssignableUsers(),
   ]);
+
+  const showTeam = canViewAllTasks(session.user.role);
 
   if (!prospect) notFound();
 
@@ -99,7 +104,13 @@ export default async function ProspectPage({
         <div className="space-y-6">
           <ProspectTasks
             prospectId={prospect.id}
+            prospectNom={prospect.nom}
+            prospectPrenom={prospect.prenom}
+            prospectEmail={prospect.email}
             tasks={prospect.tasks}
+            users={users}
+            currentUserId={session.user.id}
+            showAssignee={showTeam}
           />
           <ProspectAddNote prospectId={prospect.id} />
           <ProspectTimeline historiques={prospect.historiques} />

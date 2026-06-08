@@ -1,23 +1,21 @@
 /**
  * Seed Prisma — données initiales du CRM.
  *
- * Exécution :
- *   npm run prisma:seed
- * ou
- *   npx prisma db seed
+ * Modes :
+ *   npm run prisma:seed          → seed complet (admin + statuts + démo)
+ *   npm run prisma:seed:admin    → compte admin uniquement
+ *   npm run prisma:seed:full     → idem seed complet
  *
- * Idempotent : peut être ré-exécuté sans dupliquer (upsert + unique
- * `userId + label` sur Statut et Tag).
+ * Variables : SEED_MODE=admin|full, SEED_ADMIN_EMAIL, SEED_ADMIN_NAME, SEED_ADMIN_PASSWORD
  *
- * Les prospects @seed.crm incluent des dates, tâches et historiques
- * hétérogènes pour alimenter le dashboard (leads du jour, rappels,
- * retards, RDV, prospects à relancer).
+ * Idempotent : peut être ré-exécuté sans dupliquer (upsert).
  */
 import {
   HistoriqueType,
   Prisma,
   PrismaClient,
   Role,
+  TaskType,
 } from "@prisma/client";
 import { hash } from "bcryptjs";
 import {
@@ -68,6 +66,7 @@ function taskDay(offsetDays: number): Date {
 }
 
 type SeedTask = {
+  type?: TaskType;
   titre: string;
   /** 0 = aujourd'hui, négatif = en retard, positif = à venir */
   dayOffset: number;
@@ -121,8 +120,18 @@ const SEED_PROSPECTS: SeedProspect[] = [
     createdHour: 8,
     createdMinute: 15,
     tasks: [
-      { titre: "Rappeler pour confirmer le projet", dayOffset: 0, heure: "09:00" },
-      { titre: "Relance téléphonique", dayOffset: 0, heure: "16:10" },
+      {
+        type: TaskType.RAPPEL,
+        titre: "Rappeler pour confirmer le projet",
+        dayOffset: 0,
+        heure: "09:00",
+      },
+      {
+        type: TaskType.RELANCE,
+        titre: "Relance téléphonique",
+        dayOffset: 0,
+        heure: "16:10",
+      },
     ],
     historiques: [
       { type: HistoriqueType.CALL, contenu: "Premier contact — intéressé mais indécis", daysAgo: 0 },
@@ -209,6 +218,7 @@ const SEED_PROSPECTS: SeedProspect[] = [
     createdMinute: 30,
     tasks: [
       {
+        type: TaskType.RDV,
         titre: "Visite appartement T3 Marseille 8e",
         dayOffset: 3,
         heure: "10:30",
@@ -268,12 +278,18 @@ const SEED_PROSPECTS: SeedProspect[] = [
     createdHour: 15,
     tasks: [
       {
+        type: TaskType.RDV,
         titre: "Rendez-vous visite maison Colomiers",
         dayOffset: 1,
         heure: "14:00",
         commentaire: "12 chemin des Vignes — parking visiteur",
       },
-      { titre: "Rappel confirmation visite", dayOffset: 0, heure: "08:30" },
+      {
+        type: TaskType.RAPPEL,
+        titre: "Rappel confirmation visite",
+        dayOffset: 0,
+        heure: "08:30",
+      },
     ],
     historiques: [
       { type: HistoriqueType.MEETING, contenu: "RDV agence — critères validés", daysAgo: 3 },
@@ -336,6 +352,7 @@ const SEED_PROSPECTS: SeedProspect[] = [
     createdHour: 14,
     tasks: [
       {
+        type: TaskType.RDV,
         titre: "RDV signature compromis",
         dayOffset: 0,
         heure: "17:00",
@@ -371,9 +388,21 @@ const SEED_PROSPECTS: SeedProspect[] = [
   },
 ];
 
-async function main(): Promise<void> {
-  console.info("🌱 Démarrage du seed…");
+type SeedMode = "admin" | "full";
 
+function parseSeedMode(): SeedMode {
+  const args = process.argv.slice(2);
+  if (args.includes("--admin") || args.includes("admin")) return "admin";
+  if (args.includes("--full") || args.includes("full")) return "full";
+
+  const env = process.env.SEED_MODE?.trim().toLowerCase();
+  if (env === "admin") return "admin";
+  if (env === "full") return "full";
+
+  return "full";
+}
+
+async function seedAdmin(): Promise<{ id: string; email: string }> {
   const adminEmail = process.env.SEED_ADMIN_EMAIL ?? "admin@example.com";
   const adminName = process.env.SEED_ADMIN_NAME ?? "Admin CRM";
   const adminPassword = process.env.SEED_ADMIN_PASSWORD ?? "admin123";
@@ -391,16 +420,22 @@ async function main(): Promise<void> {
   });
 
   console.info(`✅ Admin prêt : ${admin.email} (id: ${admin.id})`);
+  return { id: admin.id, email: admin.email };
+}
 
+async function seedStatutsAndTags(adminId: string): Promise<{
+  statutByLabel: Map<string, string>;
+  tagByLabel: Map<string, string>;
+}> {
   for (const [index, statut] of DEFAULT_STATUTS.entries()) {
     await prisma.statut.upsert({
-      where: { userId_label: { userId: admin.id, label: statut.label } },
+      where: { userId_label: { userId: adminId, label: statut.label } },
       update: { couleur: statut.couleur, ordre: index },
       create: {
         label: statut.label,
         couleur: statut.couleur,
         ordre: index,
-        userId: admin.id,
+        userId: adminId,
       },
     });
   }
@@ -411,9 +446,9 @@ async function main(): Promise<void> {
 
   for (const tag of DEFAULT_TAGS) {
     const row = await prisma.tag.upsert({
-      where: { userId_label: { userId: admin.id, label: tag.label } },
+      where: { userId_label: { userId: adminId, label: tag.label } },
       update: { couleur: tag.couleur },
-      create: { label: tag.label, couleur: tag.couleur, userId: admin.id },
+      create: { label: tag.label, couleur: tag.couleur, userId: adminId },
     });
     tagByLabel.set(tag.label, row.id);
   }
@@ -421,11 +456,19 @@ async function main(): Promise<void> {
   console.info(`✅ ${DEFAULT_TAGS.length} tags insérés.`);
 
   const statutRows = await prisma.statut.findMany({
-    where: { userId: admin.id },
+    where: { userId: adminId },
     select: { id: true, label: true },
   });
   const statutByLabel = new Map(statutRows.map((s) => [s.label, s.id]));
 
+  return { statutByLabel, tagByLabel };
+}
+
+async function seedDemoProspects(
+  adminId: string,
+  statutByLabel: Map<string, string>,
+  tagByLabel: Map<string, string>,
+): Promise<void> {
   let prospectsCreated = 0;
   let prospectsUpdated = 0;
   let tasksCreated = 0;
@@ -455,13 +498,13 @@ async function main(): Promise<void> {
         prospect.criteres !== undefined
           ? (prospect.criteres as Prisma.InputJsonValue)
           : Prisma.JsonNull,
-      userId: admin.id,
+      userId: adminId,
       createdAt,
       updatedAt: createdAt,
     };
 
     const existing = await prisma.prospect.findFirst({
-      where: { userId: admin.id, email: prospect.email },
+      where: { userId: adminId, email: prospect.email },
       select: { id: true },
     });
 
@@ -497,13 +540,14 @@ async function main(): Promise<void> {
     for (const task of prospect.tasks ?? []) {
       await prisma.task.create({
         data: {
+          type: task.type ?? TaskType.RAPPEL,
           titre: task.titre,
           commentaire: task.commentaire ?? null,
           date: taskDay(task.dayOffset),
           heure: task.heure ?? null,
           fait: task.fait ?? false,
           prospectId,
-          assignedUserId: admin.id,
+          assignedUserId: adminId,
         },
       });
       tasksCreated += 1;
@@ -515,7 +559,7 @@ async function main(): Promise<void> {
           type: hist.type,
           contenu: hist.contenu,
           prospectId,
-          userId: admin.id,
+          userId: adminId,
           createdAt: atDaysAgo(hist.daysAgo, 10, 0),
         },
       });
@@ -527,7 +571,26 @@ async function main(): Promise<void> {
     `✅ ${SEED_PROSPECTS.length} prospects : ${prospectsCreated} créé(s), ${prospectsUpdated} mis à jour.`,
   );
   console.info(`✅ ${tasksCreated} tâches, ${historiquesCreated} entrées d'historique.`);
-  console.info("🎉 Seed terminé — dashboard avec données hétérogènes.");
+}
+
+async function main(): Promise<void> {
+  const mode = parseSeedMode();
+  console.info(`🌱 Démarrage du seed (mode: ${mode})…`);
+
+  const admin = await seedAdmin();
+
+  if (mode === "admin") {
+    console.info("🎉 Seed admin terminé — aucune donnée de démo chargée.");
+    console.info(
+      "   Pour les statuts, tags et prospects de démo : npm run prisma:seed:full",
+    );
+    return;
+  }
+
+  const { statutByLabel, tagByLabel } = await seedStatutsAndTags(admin.id);
+  await seedDemoProspects(admin.id, statutByLabel, tagByLabel);
+
+  console.info("🎉 Seed complet terminé — dashboard avec données hétérogènes.");
 }
 
 main()

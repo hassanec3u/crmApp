@@ -12,6 +12,7 @@ import {
   addDays,
 } from "date-fns";
 
+import { RDV_TASK_TYPES } from "@/lib/constants/tasks";
 import { prisma } from "@/lib/prisma";
 
 // ─── Types ───────────────────────────────────────────────────────────────────
@@ -27,6 +28,7 @@ export interface LeadDuJour {
 
 export interface RappelDuJour {
   id: string;
+  type: import("@prisma/client").TaskType;
   titre: string;
   heure: string | null;
   fait: boolean;
@@ -37,6 +39,7 @@ export interface RappelDuJour {
 
 export interface TacheUrgente {
   id: string;
+  type: import("@prisma/client").TaskType;
   titre: string;
   heure: string | null;
   date: Date;
@@ -113,6 +116,7 @@ export async function getRappelsDuJour(
     },
     select: {
       id: true,
+      type: true,
       titre: true,
       heure: true,
       fait: true,
@@ -141,6 +145,7 @@ export async function getTachesUrgentes(
     },
     select: {
       id: true,
+      type: true,
       titre: true,
       heure: true,
       date: true,
@@ -153,8 +158,7 @@ export async function getTachesUrgentes(
 }
 
 /**
- * Rendez-vous à venir dans les 7 prochains jours.
- * On filtre sur les tâches dont le titre contient "rendez-vous", "rdv" ou "visite".
+ * Rendez-vous à venir dans les 7 prochains jours (type RDV).
  */
 export async function getRendezVous(userId: string): Promise<RendezVous[]> {
   const now = new Date();
@@ -164,16 +168,11 @@ export async function getRendezVous(userId: string): Promise<RendezVous[]> {
     where: {
       assignedUserId: userId,
       fait: false,
+      type: { in: RDV_TASK_TYPES },
       date: {
         gte: startOfDay(now),
         lte: endOfDay(in7Days),
       },
-      OR: [
-        { titre: { contains: "rendez-vous", mode: "insensitive" } },
-        { titre: { contains: "rdv", mode: "insensitive" } },
-        { titre: { contains: "visite", mode: "insensitive" } },
-        { titre: { contains: "meeting", mode: "insensitive" } },
-      ],
     },
     select: {
       id: true,
@@ -287,13 +286,8 @@ export async function getDashboardStats(
         where: {
           assignedUserId: userId,
           fait: false,
+          type: { in: RDV_TASK_TYPES },
           date: { gte: weekStart, lte: weekEnd },
-          OR: [
-            { titre: { contains: "rendez-vous", mode: "insensitive" } },
-            { titre: { contains: "rdv", mode: "insensitive" } },
-            { titre: { contains: "visite", mode: "insensitive" } },
-            { titre: { contains: "meeting", mode: "insensitive" } },
-          ],
         },
       }),
     ]);

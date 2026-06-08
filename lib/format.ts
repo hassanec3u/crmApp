@@ -15,6 +15,13 @@ export function formatDate(value: Date | string | null | undefined): string {
   return format(date, "dd MMM yyyy", { locale: fr });
 }
 
+/** Valeur pour un input HTML `type="date"`. */
+export function formatDateForInput(value: Date | string): string {
+  const date = value instanceof Date ? value : new Date(value);
+  if (!isValid(date)) return "";
+  return format(date, "yyyy-MM-dd");
+}
+
 /** Formate une date au format `JJ MMM YYYY · HH:mm`. */
 export function formatDateTime(
   value: Date | string | null | undefined,
