@@ -1,5 +1,6 @@
 "use client";
 
+/** Sélecteur de statut du prospect : grille de boutons colorés, mise à jour en un clic. */
 import { useTransition } from "react";
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -22,6 +23,7 @@ export function ProspectStatutSelect({
   const [isPending, startTransition] = useTransition();
 
   function handleClick(statutId: string): void {
+    // Pas de requête inutile si le statut est déjà sélectionné.
     if (statutId === currentStatutId || isPending) return;
     startTransition(async () => {
       const result = await changeProspectStatut({ prospectId, statutId });

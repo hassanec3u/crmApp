@@ -1,12 +1,20 @@
+/**
+ * Règles d'accès aux tâches/rappels et aux prospects associés.
+ *
+ * Un agent ne voit que ses propres tâches/prospects ; un admin ou un
+ * manager peut voir et gérer ceux de toute l'équipe (`canViewAllTasks`).
+ */
 import type { Session } from "next-auth";
 
 import type { TaskScope } from "@/lib/constants/tasks";
 import { prisma } from "@/lib/prisma";
 
+/** Vrai si le rôle donne une visibilité sur les tâches de toute l'équipe. */
 export function canViewAllTasks(role: string | undefined): boolean {
   return role === "ADMIN" || role === "MANAGER";
 }
 
+/** Détermine la portée effective à appliquer (retombe sur "mine" si non autorisé). */
 export function resolveTaskScope(
   scope: string | undefined,
   role: string | undefined,
@@ -27,6 +35,7 @@ export function buildTaskAssigneeFilter(
   return { assignedUserId: userId };
 }
 
+/** Récupère un prospect uniquement s'il est accessible à l'utilisateur courant. */
 export async function findAccessibleProspect(
   prospectId: string,
   session: Session,
@@ -42,6 +51,7 @@ export async function findAccessibleProspect(
   });
 }
 
+/** Récupère une tâche si elle est assignée à l'utilisateur, ou s'il a une vision globale. */
 export async function findAccessibleTask(
   taskId: string,
   session: Session,
@@ -71,6 +81,13 @@ export async function findAccessibleTask(
   return null;
 }
 
+/**
+ * Valide le destinataire demandé pour une tâche.
+ *
+ * Par défaut, une tâche est assignée à son créateur. Réassigner à un
+ * autre collaborateur n'est permis qu'aux rôles avec vision globale,
+ * et seulement vers un utilisateur existant.
+ */
 export async function resolveAssigneeId(
   requestedId: string | undefined,
   session: Session,

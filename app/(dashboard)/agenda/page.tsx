@@ -17,10 +17,12 @@ export const metadata = { title: "Agenda" };
 
 type AgendaViewMode = "day" | "week";
 
+/** Lit le mode d'affichage depuis l'URL (`?view=`), retombe sur "day" si absent/invalide. */
 function parseView(value: string | undefined): AgendaViewMode {
   return value === "week" ? "week" : "day";
 }
 
+/** Lit la date d'ancrage depuis l'URL (`?date=`), retombe sur aujourd'hui si absente/invalide. */
 function parseDate(value: string | undefined): Date {
   if (!value) return startOfDay(new Date());
   try {
@@ -47,6 +49,8 @@ export default async function AgendaPage({
   const userId = session.user.id;
   const showTeam = canViewAllTasks(session.user.role);
 
+  // En vue semaine, on charge toute la semaine (lundi → dimanche) ; en
+  // vue jour, uniquement la journée ancrée.
   const rangeStart =
     view === "week"
       ? startOfWeek(anchor, { weekStartsOn: 1 })

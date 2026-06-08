@@ -1,5 +1,12 @@
 "use client";
 
+/**
+ * Vue interactive de l'agenda (jour ou semaine).
+ *
+ * Les filtres (vue, portée, date) sont stockés dans l'URL — chaque
+ * interaction pousse une nouvelle navigation, ce qui permet de
+ * recharger les données côté serveur tout en gardant l'état partageable.
+ */
 import Link from "next/link";
 import { useRouter, usePathname, useSearchParams } from "next/navigation";
 import { useTransition } from "react";
@@ -33,6 +40,7 @@ interface AgendaViewProps {
   showAssignee: boolean;
 }
 
+/** Reconvertit la date sérialisée (string ISO, transmise par le Server Component) en `Date`. */
 function deserializeTask(t: SerializedTask): TaskListItem {
   return { ...t, date: new Date(t.date) };
 }
@@ -54,6 +62,7 @@ export function AgendaView({
 
   const anchor = parseISO(anchorDate);
 
+  /** Met à jour les paramètres d'URL (vue/date/scope) et déclenche une nouvelle navigation. */
   function pushParams(updates: Record<string, string>): void {
     const params = new URLSearchParams(searchParams.toString());
     for (const [k, v] of Object.entries(updates)) {
@@ -72,6 +81,7 @@ export function AgendaView({
     end: endOfWeek(anchor, { weekStartsOn: 1 }),
   });
 
+  // Regroupe les tâches par jour (clé `yyyy-MM-dd`) pour l'affichage et les pastilles de comptage.
   const tasksByDay = new Map<string, TaskListItem[]>();
   for (const raw of tasks) {
     const task = deserializeTask(raw);

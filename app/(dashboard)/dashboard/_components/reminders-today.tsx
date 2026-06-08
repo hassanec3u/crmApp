@@ -20,6 +20,7 @@ interface RemindersTodayProps {
   reminders: RappelDuJour[];
 }
 
+/** Adapte la forme `RappelDuJour` (requête dashboard) vers `TaskListItem`, attendue par `<TaskItem>`. */
 function toTaskListItem(reminder: RappelDuJour): TaskListItem {
   return {
     id: reminder.id,

@@ -1,5 +1,9 @@
 "use client";
 
+/**
+ * Champs de formulaire communs aux dialogues de création/édition de
+ * tâche (composant contrôlé : tout l'état vit chez le parent).
+ */
 import type { TaskType } from "@prisma/client";
 
 import { Label } from "@/components/ui/label";
@@ -52,6 +56,7 @@ export function TaskFormFields({
   showAssignee = false,
   showTemplates = false,
 }: TaskFormFieldsProps): JSX.Element {
+  // Suggestions de titres pré-remplis, filtrées selon le type sélectionné.
   const templates = TASK_TITLE_TEMPLATES.filter((t) => t.type === type);
 
   return (

@@ -1,3 +1,4 @@
+/** Requêtes serveur autour des utilisateurs (collaborateurs assignables). */
 import { prisma } from "@/lib/prisma";
 
 export interface AssignableUser {

@@ -1,5 +1,12 @@
 "use client";
 
+/**
+ * Barre de recherche et filtres de la liste des prospects.
+ *
+ * Tous les filtres sont reflétés dans les paramètres d'URL (recherche
+ * différée 400 ms, statut, source, tri…) afin de rester partageables
+ * et de permettre le rendu serveur de la liste filtrée.
+ */
 import { useRouter, useSearchParams, usePathname } from "next/navigation";
 import { Search, X } from "lucide-react";
 import { useCallback, useEffect, useRef, useState, useTransition } from "react";
@@ -29,6 +36,7 @@ export function ProspectFilters({ statuts, tags }: FilterProps): JSX.Element {
   const [query, setQuery] = useState(searchParams.get("q") ?? "");
   const debounceRef = useRef<ReturnType<typeof setTimeout>>();
 
+  /** Met à jour (ou retire) un paramètre de filtre dans l'URL et revient à la page 1. */
   const updateParams = useCallback(
     (key: string, value: string | null) => {
       const params = new URLSearchParams(searchParams.toString());

@@ -1,5 +1,6 @@
 "use client";
 
+/** Bouton de suppression d'un prospect avec confirmation (dialogue d'alerte). */
 import { useRouter } from "next/navigation";
 import { useTransition } from "react";
 import { Trash2, Loader2 } from "lucide-react";

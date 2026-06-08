@@ -1,5 +1,9 @@
 "use client";
 
+/**
+ * Gestion des tags d'un prospect : ajout depuis la liste existante de
+ * l'utilisateur, ou création à la volée d'un nouveau tag coloré.
+ */
 import { useState, useTransition } from "react";
 import { Plus, X, Loader2 } from "lucide-react";
 

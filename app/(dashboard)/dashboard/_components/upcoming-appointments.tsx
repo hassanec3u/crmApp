@@ -19,6 +19,7 @@ interface UpcomingAppointmentsProps {
   appointments: RendezVous[];
 }
 
+/** Libellé relatif lisible : "Aujourd'hui" / "Demain" / sinon le jour de la semaine. */
 function getDateLabel(date: Date): string {
   if (isToday(date)) return "Aujourd'hui";
   if (isTomorrow(date)) return "Demain";

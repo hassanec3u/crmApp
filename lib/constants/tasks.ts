@@ -1,5 +1,12 @@
+/**
+ * Constantes liées aux tâches/rappels commerciaux.
+ *
+ * Centralise les libellés, modèles de titres et options de filtre pour
+ * rester cohérent entre les formulaires, badges et listes de tâches.
+ */
 import type { TaskType } from "@prisma/client";
 
+/** Libellé affichable (FR) pour chaque valeur de l'enum `TaskType`. */
 export const TASK_TYPE_LABELS: Record<TaskType, string> = {
   RAPPEL: "Rappel",
   RELANCE: "Relance",
@@ -8,6 +15,7 @@ export const TASK_TYPE_LABELS: Record<TaskType, string> = {
   SUIVI: "Suivi",
 };
 
+/** Options `{ value, label }` dérivées de `TASK_TYPE_LABELS`, prêtes pour un `<Select>`. */
 export const TASK_TYPE_OPTIONS = (
   Object.keys(TASK_TYPE_LABELS) as TaskType[]
 ).map((value) => ({
@@ -47,6 +55,8 @@ export const TASK_TITLE_TEMPLATES: Array<{
   { type: "RDV", label: "RDV visio", titre: "Rendez-vous visio" },
 ];
 
+/** Portée d'affichage des tâches : les miennes uniquement, ou toute l'équipe. */
 export type TaskScope = "mine" | "all";
 
+/** Types de tâches considérés comme des rendez-vous (affichés dans l'agenda). */
 export const RDV_TASK_TYPES: TaskType[] = ["RDV"];

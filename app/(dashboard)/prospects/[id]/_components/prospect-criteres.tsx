@@ -1,5 +1,10 @@
 "use client";
 
+/**
+ * Affiche les critères de recherche immobilière d'un prospect
+ * (type de bien, transaction, budget, surface, secteur…) stockés en
+ * JSON libre dans `Prospect.criteres`.
+ */
 import { Home, DollarSign, Maximize, MapPin } from "lucide-react";
 import type { Prisma } from "@prisma/client";
 
@@ -13,6 +18,7 @@ interface Props {
 }
 
 export function ProspectCriteres({ criteres }: Props): JSX.Element {
+  // `criteres` est un champ JSON libre : on le type côté front via `ProspectCriteres`.
   const data = (criteres as CriteresType | null) ?? {};
   const isEmpty = Object.keys(data).length === 0;
 

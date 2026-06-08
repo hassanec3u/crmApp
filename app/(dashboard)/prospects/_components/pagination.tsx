@@ -1,5 +1,6 @@
 "use client";
 
+/** Pagination de la liste des prospects, pilotée par le paramètre d'URL `?page=`. */
 import { useRouter, useSearchParams, usePathname } from "next/navigation";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 
@@ -20,6 +21,7 @@ export function Pagination({
 
   function goTo(page: number): void {
     const params = new URLSearchParams(searchParams.toString());
+    // Page 1 = état par défaut : on retire le paramètre pour garder une URL propre.
     if (page <= 1) {
       params.delete("page");
     } else {

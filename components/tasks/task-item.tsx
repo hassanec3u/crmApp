@@ -1,5 +1,14 @@
 "use client";
 
+/**
+ * Carte d'affichage d'une tâche, réutilisée à trois endroits :
+ *  - "compact"  : widgets du dashboard (lecture rapide)
+ *  - "full"     : page Tâches (toutes les actions, menu déroulant)
+ *  - "prospect" : fiche prospect (sans lien retour vers le prospect)
+ *
+ * Les actions (terminer, reporter, supprimer…) appellent les Server
+ * Actions de `lib/actions/tasks` puis rafraîchissent la route.
+ */
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useTransition } from "react";
@@ -67,6 +76,7 @@ export function TaskItem({
   const { toast } = useToast();
   const [isPending, startTransition] = useTransition();
 
+  /** Recharge les données de la route courante après une mutation réussie. */
   const refresh = (): void => router.refresh();
 
   const handleDone = (): void => {

@@ -111,6 +111,9 @@ export const reducer = (state: State, action: Action): State => {
   }
 };
 
+// État partagé hors React (singleton de module) : permet d'appeler `toast()`
+// depuis n'importe où (ex. server actions côté client, hors composant) tout
+// en notifiant les composants abonnés via `listeners`.
 const listeners: Array<(state: State) => void> = [];
 
 let memoryState: State = { toasts: [] };

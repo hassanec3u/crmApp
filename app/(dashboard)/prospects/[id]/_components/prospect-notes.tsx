@@ -1,5 +1,6 @@
 "use client";
 
+/** Zone de notes internes éditable, avec sauvegarde manuelle (bouton activé si modifié). */
 import { useState, useTransition } from "react";
 import { Save, Loader2 } from "lucide-react";
 
@@ -18,6 +19,7 @@ export function ProspectNotes({ prospectId, notes }: Props): JSX.Element {
   const { toast } = useToast();
   const [value, setValue] = useState(notes ?? "");
   const [isPending, startTransition] = useTransition();
+  // N'active le bouton de sauvegarde que si le contenu a réellement changé.
   const isDirty = value !== (notes ?? "");
 
   function handleSave(): void {

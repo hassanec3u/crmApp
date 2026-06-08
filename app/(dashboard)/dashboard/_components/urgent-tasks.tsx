@@ -20,6 +20,7 @@ interface UrgentTasksProps {
   tasks: TacheUrgente[];
 }
 
+/** Adapte la forme `TacheUrgente` (requête dashboard) vers `TaskListItem`, attendue par `<TaskItem>`. */
 function toTaskListItem(task: TacheUrgente): TaskListItem {
   return {
     id: task.id,

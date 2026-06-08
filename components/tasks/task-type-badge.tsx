@@ -1,9 +1,11 @@
+/** Badge coloré affichant le type d'une tâche (rappel, RDV, relance…). */
 import type { TaskType } from "@prisma/client";
 
 import { Badge } from "@/components/ui/badge";
 import { TASK_TYPE_LABELS } from "@/lib/constants/tasks";
 import { cn } from "@/lib/utils";
 
+/** Couleurs Tailwind associées à chaque type, pour un repérage visuel rapide. */
 const TYPE_STYLES: Record<TaskType, string> = {
   RAPPEL: "bg-amber-100 text-amber-800 border-amber-200",
   RELANCE: "bg-orange-100 text-orange-800 border-orange-200",

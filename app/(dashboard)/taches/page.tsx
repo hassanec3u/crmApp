@@ -23,6 +23,7 @@ export const metadata = { title: "Tâches" };
 
 const VALID_TABS: TaskTab[] = ["today", "overdue", "upcoming", "done"];
 
+/** Lit l'onglet actif depuis l'URL (`?tab=`), retombe sur "today" si absent/invalide. */
 function parseTab(value: string | undefined): TaskTab {
   if (value && VALID_TABS.includes(value as TaskTab)) {
     return value as TaskTab;

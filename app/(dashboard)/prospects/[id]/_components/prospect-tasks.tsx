@@ -1,5 +1,9 @@
 "use client";
 
+/**
+ * Section "Rappels" de la fiche prospect : tâches en cours puis
+ * terminées, avec création rapide pré-rattachée à ce prospect.
+ */
 import type { Task } from "@prisma/client";
 
 import { CreateTaskDialog } from "@/components/tasks/create-task-dialog";
@@ -19,6 +23,11 @@ interface Props {
   showAssignee: boolean;
 }
 
+/**
+ * Adapte un `Task` Prisma brut vers `TaskListItem`, attendu par `<TaskItem>`.
+ * Le prospect est déjà connu (fiche courante) et le collaborateur est
+ * recherché dans la liste `users` fournie par le parent.
+ */
 function toTaskListItem(
   task: Task,
   prospect: TaskListItem["prospect"],
@@ -63,6 +72,7 @@ export function ProspectTasks({
   const pending = tasks.filter((t) => !t.fait);
   const done = tasks.filter((t) => t.fait);
 
+  /** Retrouve le nom du collaborateur assigné à partir de la liste des utilisateurs assignables. */
   const resolveAssignee = (task: Task): TaskListItem["assignedUser"] => {
     const u = users.find((x) => x.id === task.assignedUserId);
     return { id: task.assignedUserId, name: u?.name ?? null };

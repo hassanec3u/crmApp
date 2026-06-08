@@ -17,10 +17,12 @@ import {
 } from "@/lib/tasks/access";
 import { revalidateTaskPaths } from "@/lib/tasks/revalidate";
 
+/** Identifie une tâche existante (utilisé par delete/markDone/toggle). */
 const taskIdSchema = z.object({ taskId: z.string().cuid() });
 
 const taskTypeSchema = z.nativeEnum(TaskType);
 
+/** Champs communs à la création et à la modification d'une tâche. */
 const taskFieldsSchema = z.object({
   type: taskTypeSchema,
   titre: z.string().trim().min(1).max(150),
@@ -38,6 +40,7 @@ const updateTaskSchema = taskFieldsSchema.extend({
   taskId: z.string().cuid(),
 });
 
+/** Report d'une tâche : nouvelle date optionnelle (sinon, lendemain par défaut). */
 const postponeTaskSchema = z.object({
   taskId: z.string().cuid(),
   date: z.string().optional(),
@@ -46,6 +49,8 @@ const postponeTaskSchema = z.object({
 const searchProspectsSchema = z.object({
   q: z.string().trim().max(100),
 });
+
+/** Recherche de prospects (autocomplétion) pour rattacher une nouvelle tâche. */
 
 export async function searchProspectsForTask(
   input: z.infer<typeof searchProspectsSchema>,
@@ -83,6 +88,7 @@ export async function searchProspectsForTask(
   return { ok: true, data: prospects };
 }
 
+/** Crée une tâche rattachée à un prospect et journalise l'action dans l'historique. */
 export async function createTask(
   input: z.infer<typeof createTaskSchema>,
 ): Promise<ActionResult<{ id: string }>> {
@@ -137,6 +143,7 @@ export async function createTask(
   }
 }
 
+/** Modifie les champs d'une tâche existante (l'utilisateur doit y avoir accès). */
 export async function updateTask(
   input: z.infer<typeof updateTaskSchema>,
 ): Promise<ActionResult<{ id: string }>> {
@@ -190,6 +197,7 @@ export async function updateTask(
   }
 }
 
+/** Supprime définitivement une tâche et trace la suppression dans l'historique. */
 export async function deleteTask(
   input: z.infer<typeof taskIdSchema>,
 ): Promise<ActionResult<{ id: string }>> {
@@ -220,6 +228,7 @@ export async function deleteTask(
   }
 }
 
+/** Marque une tâche comme terminée (idempotent : ne fait rien si déjà faite). */
 export async function markTaskDone(
   input: z.infer<typeof taskIdSchema>,
 ): Promise<ActionResult<{ id: string }>> {
@@ -254,6 +263,7 @@ export async function markTaskDone(
   }
 }
 
+/** Inverse l'état fait/à faire d'une tâche (case à cocher dans les listes). */
 export async function toggleTask(
   input: z.infer<typeof taskIdSchema>,
 ): Promise<ActionResult<{ id: string }>> {
@@ -290,6 +300,7 @@ export async function toggleTask(
   }
 }
 
+/** Reporte une tâche à une date donnée (par défaut : le lendemain) et la rouvre. */
 export async function postponeTask(
   input: z.infer<typeof postponeTaskSchema>,
 ): Promise<ActionResult<{ id: string }>> {
@@ -300,6 +311,7 @@ export async function postponeTask(
   const task = await findAccessibleTask(parsed.data.taskId, session);
   if (!task) return { ok: false, error: "Tâche introuvable" };
 
+  // Pas de date fournie → on reporte au jour suivant par défaut.
   const newDate = parsed.data.date
     ? new Date(parsed.data.date)
     : addDays(new Date(), 1);

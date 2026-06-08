@@ -1,5 +1,6 @@
 "use client";
 
+/** Dialogue de report d'une tâche : propose le lendemain par défaut, modifiable. */
 import { useState, useTransition } from "react";
 import { addDays } from "date-fns";
 

@@ -1,9 +1,11 @@
 "use client";
 
+/** Liste des tâches d'un onglet donné, ou message vide adapté à l'onglet. */
 import { TaskItem } from "@/components/tasks/task-item";
 import type { TaskListItem, TaskTab } from "@/lib/queries/tasks";
 import type { AssignableUser } from "@/lib/queries/users";
 
+/** Message affiché quand l'onglet ne contient aucune tâche. */
 const EMPTY_MESSAGES: Record<TaskTab, string> = {
   today: "Aucun rappel prévu aujourd'hui.",
   overdue: "Aucune tâche en retard.",

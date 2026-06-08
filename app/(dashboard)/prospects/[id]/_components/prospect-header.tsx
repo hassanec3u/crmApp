@@ -1,5 +1,6 @@
 "use client";
 
+/** En-tête de la fiche prospect : identité, statut, coordonnées cliquables (tel/mail). */
 import { Phone, Mail, ExternalLink } from "lucide-react";
 import type { Prospect, Statut } from "@prisma/client";
 

@@ -1,5 +1,12 @@
 "use client";
 
+/**
+ * Navigation principale de l'espace authentifié.
+ *
+ * Un seul composant gère trois présentations responsives : barre du
+ * haut + tiroir sur mobile, sidebar repliable sur desktop, et barre
+ * d'onglets fixée en bas sur mobile.
+ */
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
@@ -19,6 +26,7 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
+/** Entrées de menu communes aux trois présentations (label long/court selon l'espace). */
 const NAV_ITEMS = [
   { href: "/dashboard", label: "Dashboard", shortLabel: "Accueil", icon: Home },
   { href: "/prospects", label: "Prospects", shortLabel: "Prospects", icon: Users },

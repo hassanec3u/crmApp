@@ -1,5 +1,9 @@
 "use client";
 
+/**
+ * Ligne de statut déplaçable dans la liste réordonnable (dnd-kit) :
+ * poignée de glisser-déposer, badge coloré, actions d'édition et de suppression.
+ */
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { GripVertical, Pencil, Trash2 } from "lucide-react";

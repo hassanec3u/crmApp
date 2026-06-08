@@ -1,3 +1,4 @@
+/** Squelette de chargement affiché pendant le chargement des données de l'agenda. */
 import { Skeleton } from "@/components/ui/skeleton";
 
 export default function AgendaLoading(): JSX.Element {

@@ -1,5 +1,6 @@
 "use client";
 
+/** Formulaire d'ajout rapide d'une note à l'historique d'un prospect. */
 import { useState, useTransition } from "react";
 import { Send, Loader2 } from "lucide-react";
 

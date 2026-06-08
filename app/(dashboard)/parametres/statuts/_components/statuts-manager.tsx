@@ -1,5 +1,12 @@
 "use client";
 
+/**
+ * Gestionnaire client des statuts : liste réordonnable par glisser-déposer
+ * (dnd-kit), avec dialogue partagé pour la création et l'édition.
+ *
+ * L'ordre est mis à jour de façon optimiste (état local) avant
+ * confirmation côté serveur, pour une interaction fluide.
+ */
 import { useState, useTransition } from "react";
 import {
   DndContext,
@@ -55,6 +62,7 @@ export function StatutsManager({ initialStatuts }: Props): JSX.Element {
     }),
   );
 
+  /** Réordonne localement (optimiste) puis persiste le nouvel ordre côté serveur, avec rollback en cas d'échec. */
   function handleDragEnd(event: DragEndEvent): void {
     const { active, over } = event;
     if (!over || active.id === over.id) return;

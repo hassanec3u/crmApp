@@ -1,9 +1,16 @@
 "use client";
 
+/**
+ * Page d'erreur de connexion NextAuth (`?error=...`).
+ *
+ * NextAuth redirige ici avec un code d'erreur générique en paramètre
+ * d'URL ; on le traduit en message lisible pour l'utilisateur.
+ */
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { Suspense } from "react";
 
+/** Traduction des codes d'erreur NextAuth vers des messages affichables en français. */
 const ERROR_MESSAGES: Record<string, string> = {
   Configuration: "Configuration invalide côté serveur. Contactez l'administrateur.",
   AccessDenied: "Accès refusé.",

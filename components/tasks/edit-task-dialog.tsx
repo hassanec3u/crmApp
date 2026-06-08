@@ -1,5 +1,6 @@
 "use client";
 
+/** Dialogue d'édition d'une tâche existante (pré-rempli avec ses valeurs actuelles). */
 import { useEffect, useState, useTransition } from "react";
 import type { TaskType } from "@prisma/client";
 
@@ -47,6 +48,8 @@ export function EditTaskDialog({
   );
   const [isPending, startTransition] = useTransition();
 
+  // Resynchronise le formulaire avec la tâche à chaque ouverture (au cas
+  // où les données auraient changé depuis le dernier passage).
   useEffect(() => {
     if (open) {
       setType(task.type);

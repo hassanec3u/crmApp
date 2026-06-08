@@ -1,5 +1,12 @@
 "use client";
 
+/**
+ * Dialogue de création d'une tâche.
+ *
+ * Si `defaultProspect` n'est pas fourni (ex: bouton flottant global),
+ * l'utilisateur recherche un prospect par nom/email avec une recherche
+ * différée (debounce 300 ms) côté serveur.
+ */
 import { useCallback, useEffect, useState, useTransition } from "react";
 import { Plus, Search } from "lucide-react";
 import type { TaskType } from "@prisma/client";
@@ -66,6 +73,7 @@ export function CreateTaskDialog({
   const [commentaire, setCommentaire] = useState("");
   const [assignedUserId, setAssignedUserId] = useState(currentUserId);
 
+  /** Remet le formulaire à son état initial (fermeture ou succès de création). */
   const resetForm = useCallback((): void => {
     setSearch("");
     setHits([]);
@@ -83,6 +91,7 @@ export function CreateTaskDialog({
     if (defaultProspect) setSelected(defaultProspect);
   }, [open, defaultProspect]);
 
+  // Recherche de prospects avec un léger délai pour éviter une requête par frappe.
   useEffect(() => {
     if (defaultProspect || search.length < 2) {
       setHits([]);

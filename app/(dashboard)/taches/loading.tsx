@@ -1,3 +1,4 @@
+/** Squelette de chargement affiché pendant le chargement de la liste des tâches. */
 import { Skeleton } from "@/components/ui/skeleton";
 
 export default function TachesLoading(): JSX.Element {

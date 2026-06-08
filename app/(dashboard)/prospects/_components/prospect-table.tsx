@@ -1,5 +1,6 @@
 "use client";
 
+/** Liste de prospects sous forme de cartes cliquables (nom, statut, contact, dernière activité). */
 import Link from "next/link";
 import { Phone, Mail, ChevronRight } from "lucide-react";
 

@@ -6,6 +6,7 @@ import { usePathname, useSearchParams } from "next/navigation";
 import { cn } from "@/lib/utils";
 import type { TaskScope } from "@/lib/constants/tasks";
 
+/** Bascule "mes tâches / toute l'équipe", visible uniquement pour admin/manager. */
 interface TachesScopeFilterProps {
   activeScope: TaskScope;
   canViewAll: boolean;

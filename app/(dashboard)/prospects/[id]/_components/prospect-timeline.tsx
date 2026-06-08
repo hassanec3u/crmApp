@@ -1,5 +1,6 @@
 "use client";
 
+/** Frise chronologique de l'historique d'actions d'un prospect (appels, statuts, tags…). */
 import {
   Phone,
   Mail,
@@ -26,6 +27,7 @@ interface Props {
   historiques: HistoriqueWithUser[];
 }
 
+/** Icône associée à chaque type d'événement de l'historique. */
 const ICONS: Record<HistoriqueType, typeof Activity> = {
   CALL: Phone,
   EMAIL: Mail,

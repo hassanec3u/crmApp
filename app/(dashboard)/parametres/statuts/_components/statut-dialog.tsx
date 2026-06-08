@@ -1,5 +1,10 @@
 "use client";
 
+/**
+ * Dialogue de création/édition d'un statut : libellé et couleur
+ * (choisie dans une palette prédéfinie). Le même composant sert
+ * pour la création (`editing` nul) et l'édition (`editing` rempli).
+ */
 import { useEffect, useState } from "react";
 
 import { Button } from "@/components/ui/button";
@@ -31,6 +36,8 @@ export function StatutDialog({
   const [couleur, setCouleur] = useState("#3b82f6");
   const [isSaving, setIsSaving] = useState(false);
 
+  // Resynchronise le formulaire à chaque ouverture : pré-remplit avec le statut
+  // édité, ou repart sur des valeurs vierges en mode création.
   useEffect(() => {
     if (open) {
       setLabel(editing?.label ?? "");

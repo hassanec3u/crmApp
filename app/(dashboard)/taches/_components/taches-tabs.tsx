@@ -7,6 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 import type { TaskTab } from "@/lib/queries/tasks";
 
+/** Onglets de filtrage des tâches, affichés dans l'ordre avec leur compteur. */
 const TABS: { id: TaskTab; label: string }[] = [
   { id: "today", label: "Aujourd'hui" },
   { id: "overdue", label: "En retard" },
@@ -29,6 +30,7 @@ export function TachesTabs({ counts, activeTab }: TachesTabsProps): JSX.Element 
       aria-label="Filtres des tâches"
     >
       {TABS.map((tab) => {
+        // Conserve le filtre de portée (`scope`) actif lors du changement d'onglet.
         const params = new URLSearchParams(searchParams.toString());
         params.set("tab", tab.id);
         const scope = searchParams.get("scope");
