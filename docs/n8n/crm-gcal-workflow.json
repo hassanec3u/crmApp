@@ -1,0 +1,249 @@
+{
+  "name": "CRM → Google Calendar",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "crm-gcal",
+        "authentication": "headerAuth",
+        "responseMode": "lastNode",
+        "options": {}
+      },
+      "id": "a1b2c3d4-0001-0001-0001-000000000001",
+      "name": "Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [240, 300],
+      "webhookId": "crm-gcal"
+    },
+    {
+      "parameters": {
+        "rules": {
+          "rules": [
+            {
+              "conditions": {
+                "options": { "caseSensitive": true, "leftValue": "", "typeValidation": "strict" },
+                "combinator": "and",
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.body.action }}",
+                    "rightValue": "create",
+                    "operator": { "type": "string", "operation": "equals" }
+                  }
+                ]
+              },
+              "renameOutput": true,
+              "outputKey": "create"
+            },
+            {
+              "conditions": {
+                "options": { "caseSensitive": true, "leftValue": "", "typeValidation": "strict" },
+                "combinator": "and",
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.body.action }}",
+                    "rightValue": "update",
+                    "operator": { "type": "string", "operation": "equals" }
+                  }
+                ]
+              },
+              "renameOutput": true,
+              "outputKey": "update"
+            },
+            {
+              "conditions": {
+                "options": { "caseSensitive": true, "leftValue": "", "typeValidation": "strict" },
+                "combinator": "and",
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.body.action }}",
+                    "rightValue": "delete",
+                    "operator": { "type": "string", "operation": "equals" }
+                  }
+                ]
+              },
+              "renameOutput": true,
+              "outputKey": "delete"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "a1b2c3d4-0001-0001-0001-000000000002",
+      "name": "Switch Action",
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3,
+      "position": [460, 300]
+    },
+    {
+      "parameters": {
+        "jsCode": "const body = $json.body;\nconst dateStr = body.date;\nconst heure = body.heure || '09:00';\n\nconst base = new Date(dateStr);\nconst [hours, minutes] = heure.split(':').map(Number);\n\nconst start = new Date(base);\nstart.setUTCHours(hours, minutes, 0, 0);\n\nconst end = new Date(start);\nend.setUTCHours(end.getUTCHours() + 1);\n\nreturn [{\n  json: {\n    ...body,\n    startDateTime: start.toISOString(),\n    endDateTime: end.toISOString()\n  }\n}];"
+      },
+      "id": "a1b2c3d4-0001-0001-0001-000000000003",
+      "name": "Build Datetime (Create)",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [680, 160]
+    },
+    {
+      "parameters": {
+        "operation": "create",
+        "calendar": {
+          "__rl": true,
+          "value": "primary",
+          "mode": "list",
+          "cachedResultName": "CRM RDV"
+        },
+        "start": "={{ $json.startDateTime }}",
+        "end": "={{ $json.endDateTime }}",
+        "additionalFields": {
+          "summary": "=[RDV] {{ $json.titre }} — {{ $json.prospectPrenom }} {{ $json.prospectNom }}",
+          "description": "={{ $json.commentaire ? $json.commentaire + '\\n\\n' : '' }}CRM Task ID: {{ $json.taskId }}"
+        }
+      },
+      "id": "a1b2c3d4-0001-0001-0001-000000000004",
+      "name": "GCal Create Event",
+      "type": "n8n-nodes-base.googleCalendar",
+      "typeVersion": 1,
+      "position": [900, 160],
+      "credentials": {
+        "googleCalendarOAuth2Api": {
+          "id": "REMPLACER_PAR_ID_CREDENTIAL",
+          "name": "Google Calendar CRM"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $env.CRM_URL }}/api/tasks/{{ $('Webhook').item.json.body.taskId }}/gcal",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "=Bearer {{ $env.N8N_WEBHOOK_SECRET }}"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "googleCalendarEventId",
+              "value": "={{ $json.id }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "a1b2c3d4-0001-0001-0001-000000000005",
+      "name": "Callback CRM",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [1120, 160]
+    },
+    {
+      "parameters": {
+        "jsCode": "const body = $json.body;\nconst dateStr = body.date;\nconst heure = body.heure || '09:00';\n\nconst base = new Date(dateStr);\nconst [hours, minutes] = heure.split(':').map(Number);\n\nconst start = new Date(base);\nstart.setUTCHours(hours, minutes, 0, 0);\n\nconst end = new Date(start);\nend.setUTCHours(end.getUTCHours() + 1);\n\nreturn [{\n  json: {\n    ...body,\n    startDateTime: start.toISOString(),\n    endDateTime: end.toISOString()\n  }\n}];"
+      },
+      "id": "a1b2c3d4-0001-0001-0001-000000000006",
+      "name": "Build Datetime (Update)",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [680, 320]
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "calendar": {
+          "__rl": true,
+          "value": "primary",
+          "mode": "list",
+          "cachedResultName": "CRM RDV"
+        },
+        "eventId": "={{ $json.googleCalendarEventId }}",
+        "updateFields": {
+          "start": "={{ $json.startDateTime }}",
+          "end": "={{ $json.endDateTime }}",
+          "summary": "=[RDV] {{ $json.titre }}",
+          "description": "={{ $json.commentaire ? $json.commentaire + '\\n\\n' : '' }}CRM Task ID: {{ $json.taskId }}"
+        }
+      },
+      "id": "a1b2c3d4-0001-0001-0001-000000000007",
+      "name": "GCal Update Event",
+      "type": "n8n-nodes-base.googleCalendar",
+      "typeVersion": 1,
+      "position": [900, 320],
+      "credentials": {
+        "googleCalendarOAuth2Api": {
+          "id": "REMPLACER_PAR_ID_CREDENTIAL",
+          "name": "Google Calendar CRM"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "delete",
+        "calendar": {
+          "__rl": true,
+          "value": "primary",
+          "mode": "list",
+          "cachedResultName": "CRM RDV"
+        },
+        "eventId": "={{ $json.body.googleCalendarEventId }}"
+      },
+      "id": "a1b2c3d4-0001-0001-0001-000000000008",
+      "name": "GCal Delete Event",
+      "type": "n8n-nodes-base.googleCalendar",
+      "typeVersion": 1,
+      "position": [680, 480],
+      "credentials": {
+        "googleCalendarOAuth2Api": {
+          "id": "REMPLACER_PAR_ID_CREDENTIAL",
+          "name": "Google Calendar CRM"
+        }
+      }
+    }
+  ],
+  "connections": {
+    "Webhook": {
+      "main": [
+        [{ "node": "Switch Action", "type": "main", "index": 0 }]
+      ]
+    },
+    "Switch Action": {
+      "main": [
+        [{ "node": "Build Datetime (Create)", "type": "main", "index": 0 }],
+        [{ "node": "Build Datetime (Update)", "type": "main", "index": 0 }],
+        [{ "node": "GCal Delete Event", "type": "main", "index": 0 }]
+      ]
+    },
+    "Build Datetime (Create)": {
+      "main": [
+        [{ "node": "GCal Create Event", "type": "main", "index": 0 }]
+      ]
+    },
+    "GCal Create Event": {
+      "main": [
+        [{ "node": "Callback CRM", "type": "main", "index": 0 }]
+      ]
+    },
+    "Build Datetime (Update)": {
+      "main": [
+        [{ "node": "GCal Update Event", "type": "main", "index": 0 }]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "meta": {
+    "templateCredsSetupCompleted": false
+  }
+}
