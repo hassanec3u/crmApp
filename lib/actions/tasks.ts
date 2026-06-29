@@ -182,6 +182,9 @@ export async function updateTask(
   }
 
   try {
+    const wasRdv = task.type === "RDV";
+    const isRdv = parsed.data.type === "RDV";
+
     await prisma.task.update({
       where: { id: task.id },
       data: {
@@ -191,6 +194,7 @@ export async function updateTask(
         date: new Date(parsed.data.date),
         heure: parsed.data.heure?.trim() || null,
         assignedUserId: assigneeId,
+        ...(wasRdv && !isRdv ? { googleCalendarEventId: null } : {}),
       },
     });
 
@@ -203,19 +207,36 @@ export async function updateTask(
       },
     });
 
-    const wasRdv = task.type === "RDV";
-    const isRdv = parsed.data.type === "RDV";
-
     if (wasRdv && isRdv) {
-      notifyGcal({
-        action: "update",
-        taskId: task.id,
-        googleCalendarEventId: task.googleCalendarEventId,
-        titre: parsed.data.titre,
-        date: new Date(parsed.data.date).toISOString(),
-        heure: parsed.data.heure || null,
-        commentaire: parsed.data.commentaire || null,
-      });
+      if (task.googleCalendarEventId) {
+        notifyGcal({
+          action: "update",
+          taskId: task.id,
+          googleCalendarEventId: task.googleCalendarEventId,
+          titre: parsed.data.titre,
+          date: new Date(parsed.data.date).toISOString(),
+          heure: parsed.data.heure || null,
+          commentaire: parsed.data.commentaire || null,
+        });
+      } else {
+        // n8n was unreachable at creation — retry as a late create
+        const prospect = await prisma.prospect.findUnique({
+          where: { id: task.prospectId },
+          select: { nom: true, prenom: true },
+        });
+        if (prospect) {
+          notifyGcal({
+            action: "create",
+            taskId: task.id,
+            titre: parsed.data.titre,
+            date: new Date(parsed.data.date).toISOString(),
+            heure: parsed.data.heure || null,
+            commentaire: parsed.data.commentaire || null,
+            prospectNom: prospect.nom,
+            prospectPrenom: prospect.prenom,
+          });
+        }
+      }
     } else if (wasRdv && !isRdv && task.googleCalendarEventId) {
       notifyGcal({
         action: "delete",

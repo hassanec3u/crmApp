@@ -6,11 +6,12 @@ export async function POST(
   { params }: { params: { id: string } },
 ): Promise<NextResponse> {
   const secret = process.env.N8N_WEBHOOK_SECRET;
-  if (secret) {
-    const auth = req.headers.get("authorization");
-    if (auth !== `Bearer ${secret}`) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
+  if (!secret) {
+    console.error("[gcal callback] N8N_WEBHOOK_SECRET is not configured");
+    return NextResponse.json({ error: "Service unavailable" }, { status: 503 });
+  }
+  if (req.headers.get("authorization") !== `Bearer ${secret}`) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
   let body: unknown;
