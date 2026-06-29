@@ -5,6 +5,7 @@
  * manager peut voir et gérer ceux de toute l'équipe (`canViewAllTasks`).
  */
 import type { Session } from "next-auth";
+import type { TaskType } from "@prisma/client";
 
 import type { TaskScope } from "@/lib/constants/tasks";
 import { prisma } from "@/lib/prisma";
@@ -62,6 +63,8 @@ export async function findAccessibleTask(
   titre: string;
   date: Date;
   assignedUserId: string;
+  type: TaskType;
+  googleCalendarEventId: string | null;
 } | null> {
   const task = await prisma.task.findUnique({
     where: { id: taskId },
@@ -72,6 +75,8 @@ export async function findAccessibleTask(
       titre: true,
       date: true,
       assignedUserId: true,
+      type: true,
+      googleCalendarEventId: true,
     },
   });
 
