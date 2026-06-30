@@ -16,6 +16,7 @@ import {
   resolveAssigneeId,
 } from "@/lib/tasks/access";
 import { revalidateTaskPaths } from "@/lib/tasks/revalidate";
+import { notifyGcal } from "@/lib/gcal/notify";
 
 /** Identifie une tâche existante (utilisé par delete/markDone/toggle). */
 const taskIdSchema = z.object({ taskId: z.string().cuid() });
@@ -135,6 +136,19 @@ export async function createTask(
       },
     });
 
+    if (parsed.data.type === "RDV") {
+      notifyGcal({
+        action: "create",
+        taskId: task.id,
+        titre: task.titre,
+        date: task.date.toISOString(),
+        heure: task.heure,
+        commentaire: task.commentaire,
+        prospectNom: prospect.nom,
+        prospectPrenom: prospect.prenom,
+      });
+    }
+
     revalidateTaskPaths(prospect.id);
     return { ok: true, data: { id: task.id } };
   } catch (error) {
@@ -168,6 +182,9 @@ export async function updateTask(
   }
 
   try {
+    const wasRdv = task.type === "RDV";
+    const isRdv = parsed.data.type === "RDV";
+
     await prisma.task.update({
       where: { id: task.id },
       data: {
@@ -177,6 +194,7 @@ export async function updateTask(
         date: new Date(parsed.data.date),
         heure: parsed.data.heure?.trim() || null,
         assignedUserId: assigneeId,
+        ...(wasRdv && !isRdv ? { googleCalendarEventId: null } : {}),
       },
     });
 
@@ -188,6 +206,61 @@ export async function updateTask(
         userId: session.user.id,
       },
     });
+
+    if (wasRdv && isRdv) {
+      if (task.googleCalendarEventId) {
+        notifyGcal({
+          action: "update",
+          taskId: task.id,
+          googleCalendarEventId: task.googleCalendarEventId,
+          titre: parsed.data.titre,
+          date: new Date(parsed.data.date).toISOString(),
+          heure: parsed.data.heure || null,
+          commentaire: parsed.data.commentaire || null,
+        });
+      } else {
+        // n8n was unreachable at creation — retry as a late create
+        const prospect = await prisma.prospect.findUnique({
+          where: { id: task.prospectId },
+          select: { nom: true, prenom: true },
+        });
+        if (prospect) {
+          notifyGcal({
+            action: "create",
+            taskId: task.id,
+            titre: parsed.data.titre,
+            date: new Date(parsed.data.date).toISOString(),
+            heure: parsed.data.heure || null,
+            commentaire: parsed.data.commentaire || null,
+            prospectNom: prospect.nom,
+            prospectPrenom: prospect.prenom,
+          });
+        }
+      }
+    } else if (wasRdv && !isRdv && task.googleCalendarEventId) {
+      notifyGcal({
+        action: "delete",
+        taskId: task.id,
+        googleCalendarEventId: task.googleCalendarEventId,
+      });
+    } else if (!wasRdv && isRdv) {
+      const prospect = await prisma.prospect.findUnique({
+        where: { id: task.prospectId },
+        select: { nom: true, prenom: true },
+      });
+      if (prospect) {
+        notifyGcal({
+          action: "create",
+          taskId: task.id,
+          titre: parsed.data.titre,
+          date: new Date(parsed.data.date).toISOString(),
+          heure: parsed.data.heure || null,
+          commentaire: parsed.data.commentaire || null,
+          prospectNom: prospect.nom,
+          prospectPrenom: prospect.prenom,
+        });
+      }
+    }
 
     revalidateTaskPaths(task.prospectId);
     return { ok: true, data: { id: task.id } };
@@ -209,6 +282,14 @@ export async function deleteTask(
   if (!task) return { ok: false, error: "Tâche introuvable" };
 
   try {
+    if (task.type === "RDV" && task.googleCalendarEventId) {
+      notifyGcal({
+        action: "delete",
+        taskId: task.id,
+        googleCalendarEventId: task.googleCalendarEventId,
+      });
+    }
+
     await prisma.task.delete({ where: { id: task.id } });
 
     await prisma.historiqueAction.create({

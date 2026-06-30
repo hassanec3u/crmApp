@@ -228,6 +228,8 @@ model Task {
   heure       String?
   fait        Boolean  @default(false)
 
+  googleCalendarEventId String?
+
   prospectId String
   prospect   Prospect @relation(fields: [prospectId], references: [id], onDelete: Cascade)
 
