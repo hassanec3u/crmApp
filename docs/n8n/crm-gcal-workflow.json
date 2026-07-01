@@ -77,7 +77,7 @@
     },
     {
       "parameters": {
-        "jsCode": "const body = $json.body;\nconst dateStr = body.date;\nconst heure = body.heure || '09:00';\n\nconst base = new Date(dateStr);\nconst [hours, minutes] = heure.split(':').map(Number);\n\nconst start = new Date(base);\nstart.setUTCHours(hours, minutes, 0, 0);\n\nconst end = new Date(start);\nend.setUTCHours(end.getUTCHours() + 1);\n\nreturn [{\n  json: {\n    ...body,\n    startDateTime: start.toISOString(),\n    endDateTime: end.toISOString()\n  }\n}];"
+        "jsCode": "const body = $json.body;\nconst dateStr = body.date;\nconst heure = body.heure || \"09:00\";\nconst [hours, minutes] = heure.split(\":\").map(Number);\n\n// Decalage UTC reel de Paris pour ce jour (gere ete/hiver), calcule a midi UTC\n// pour ne jamais tomber sur l instant exact du changement d heure.\nconst noonUtc = new Date(dateStr + \"T12:00:00Z\");\nconst offsetFormatter = new Intl.DateTimeFormat(\"en-US\", {\n  timeZone: \"Europe/Paris\",\n  timeZoneName: \"shortOffset\",\n});\nconst offsetPart = offsetFormatter.formatToParts(noonUtc).find((p) => p.type === \"timeZoneName\").value;\nconst offsetHours = parseInt(offsetPart.replace(\"GMT\", \"\"), 10) || 0;\n\nconst start = new Date(dateStr);\nstart.setUTCHours(hours - offsetHours, minutes, 0, 0);\n\nconst end = new Date(start);\nend.setUTCHours(end.getUTCHours() + 1);\n\nreturn [{\n  json: {\n    ...body,\n    startDateTime: start.toISOString(),\n    endDateTime: end.toISOString()\n  }\n}];"
       },
       "id": "a1b2c3d4-0001-0001-0001-000000000003",
       "name": "Build Datetime (Create)",
@@ -149,7 +149,7 @@
     },
     {
       "parameters": {
-        "jsCode": "const body = $json.body;\nconst dateStr = body.date;\nconst heure = body.heure || '09:00';\n\nconst base = new Date(dateStr);\nconst [hours, minutes] = heure.split(':').map(Number);\n\nconst start = new Date(base);\nstart.setUTCHours(hours, minutes, 0, 0);\n\nconst end = new Date(start);\nend.setUTCHours(end.getUTCHours() + 1);\n\nreturn [{\n  json: {\n    ...body,\n    startDateTime: start.toISOString(),\n    endDateTime: end.toISOString()\n  }\n}];"
+        "jsCode": "const body = $json.body;\nconst dateStr = body.date;\nconst heure = body.heure || \"09:00\";\nconst [hours, minutes] = heure.split(\":\").map(Number);\n\n// Decalage UTC reel de Paris pour ce jour (gere ete/hiver), calcule a midi UTC\n// pour ne jamais tomber sur l instant exact du changement d heure.\nconst noonUtc = new Date(dateStr + \"T12:00:00Z\");\nconst offsetFormatter = new Intl.DateTimeFormat(\"en-US\", {\n  timeZone: \"Europe/Paris\",\n  timeZoneName: \"shortOffset\",\n});\nconst offsetPart = offsetFormatter.formatToParts(noonUtc).find((p) => p.type === \"timeZoneName\").value;\nconst offsetHours = parseInt(offsetPart.replace(\"GMT\", \"\"), 10) || 0;\n\nconst start = new Date(dateStr);\nstart.setUTCHours(hours - offsetHours, minutes, 0, 0);\n\nconst end = new Date(start);\nend.setUTCHours(end.getUTCHours() + 1);\n\nreturn [{\n  json: {\n    ...body,\n    startDateTime: start.toISOString(),\n    endDateTime: end.toISOString()\n  }\n}];"
       },
       "id": "a1b2c3d4-0001-0001-0001-000000000006",
       "name": "Build Datetime (Update)",
