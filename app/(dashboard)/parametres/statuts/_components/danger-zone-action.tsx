@@ -65,51 +65,56 @@ export function DangerZoneAction({
   }
 
   return (
-    <AlertDialog
-      onOpenChange={(open) => {
-        if (!open) setConfirmText("");
-      }}
-    >
-      <AlertDialogTrigger asChild>
-        <Button variant="destructive" disabled={count === 0}>
-          <Trash2 className="mr-2 h-4 w-4" />
-          {title}
-        </Button>
-      </AlertDialogTrigger>
-      <AlertDialogContent>
-        <AlertDialogHeader>
-          <AlertDialogTitle>{title} ?</AlertDialogTitle>
-          <AlertDialogDescription>
-            {description} Cette action supprimera définitivement{" "}
-            <strong>
-              {count} {label(count)}
-            </strong>{" "}
-            et est irréversible.
-          </AlertDialogDescription>
-        </AlertDialogHeader>
-        <div className="space-y-2">
-          <p className="text-sm text-muted-foreground">
-            Tapez <strong>{CONFIRM_WORD}</strong> ci-dessous pour confirmer.
-          </p>
-          <Input
-            value={confirmText}
-            onChange={(e) => setConfirmText(e.target.value)}
-            placeholder={CONFIRM_WORD}
-            autoComplete="off"
-          />
-        </div>
-        <AlertDialogFooter>
-          <AlertDialogCancel>Annuler</AlertDialogCancel>
-          <AlertDialogAction
-            onClick={handleDelete}
-            disabled={!canConfirm || isPending}
-            className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-          >
-            {isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-            Confirmer la suppression
-          </AlertDialogAction>
-        </AlertDialogFooter>
-      </AlertDialogContent>
-    </AlertDialog>
+    <div>
+      <AlertDialog
+        onOpenChange={(open) => {
+          if (!open) setConfirmText("");
+        }}
+      >
+        <AlertDialogTrigger asChild>
+          <Button variant="destructive" disabled={count === 0}>
+            <Trash2 className="mr-2 h-4 w-4" />
+            {title}
+          </Button>
+        </AlertDialogTrigger>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>{title} ?</AlertDialogTitle>
+            <AlertDialogDescription>
+              {description} Cette action supprimera définitivement{" "}
+              <strong>
+                {count} {label(count)}
+              </strong>{" "}
+              et est irréversible.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <div className="space-y-2">
+            <p className="text-sm text-muted-foreground">
+              Tapez <strong>{CONFIRM_WORD}</strong> ci-dessous pour confirmer.
+            </p>
+            <Input
+              value={confirmText}
+              onChange={(e) => setConfirmText(e.target.value)}
+              placeholder={CONFIRM_WORD}
+              autoComplete="off"
+            />
+          </div>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Annuler</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleDelete}
+              disabled={!canConfirm || isPending}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              {isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+              Confirmer la suppression
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+      {count === 0 && (
+        <p className="text-sm text-muted-foreground mt-2">Rien à supprimer</p>
+      )}
+    </div>
   );
 }
