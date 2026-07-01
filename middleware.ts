@@ -14,8 +14,9 @@ export const config = {
      * Protège toutes les routes SAUF :
      *  - /login, /login/*
      *  - /api/auth/* (callback NextAuth)
+     *  - /api/tasks/<id>/gcal (callback n8n, authentifié par bearer token, pas par session)
      *  - assets statiques (_next, favicon, images publiques)
      */
-    "/((?!login|api/auth|_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)",
+    "/((?!login|api/auth|api/tasks/[^/]+/gcal|_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)",
   ],
 };
