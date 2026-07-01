@@ -192,4 +192,9 @@ export async function getRdvTasksForUser(
   });
 }
 
+/** Nombre total de tâches assignées à l'utilisateur, tous statuts confondus. */
+export async function countAllTasksForUser(userId: string): Promise<number> {
+  return prisma.task.count({ where: { assignedUserId: userId } });
+}
+
 export { canViewAllTasks };

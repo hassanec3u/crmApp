@@ -15,11 +15,12 @@
  */
 "use server";
 
-import { HistoriqueType, Prisma } from "@prisma/client";
+import { HistoriqueType, Prisma, TaskType } from "@prisma/client";
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 
 import { prisma } from "@/lib/prisma";
+import { notifyGcal } from "@/lib/gcal/notify";
 import { requireSession } from "@/lib/session";
 import {
   prospectSchema,
@@ -417,5 +418,54 @@ export async function removeTagFromProspect(
   } catch (error) {
     console.error("[removeTagFromProspect]", error);
     return { ok: false, error: "Impossible de retirer le tag" };
+  }
+}
+
+// =====================================================================
+// Suppression en masse de tous les prospects de l'utilisateur
+// =====================================================================
+
+/**
+ * Supprime définitivement tous les prospects de l'utilisateur courant.
+ *
+ * Cascade Prisma : les tâches et l'historique liés sont supprimés
+ * automatiquement (`onDelete: Cascade` dans le schéma). Comme cette
+ * cascade ne déclenche aucun code applicatif, on notifie n8n pour
+ * chaque RDV synchronisé avant la suppression.
+ */
+export async function deleteAllMyProspects(): Promise<ActionResult<{ count: number }>> {
+  const session = await requireSession();
+
+  try {
+    const rdvTasks = await prisma.task.findMany({
+      where: {
+        prospect: { userId: session.user.id },
+        type: TaskType.RDV,
+        googleCalendarEventId: { not: null },
+      },
+      select: { id: true, googleCalendarEventId: true },
+    });
+
+    for (const task of rdvTasks) {
+      notifyGcal({
+        action: "delete",
+        taskId: task.id,
+        googleCalendarEventId: task.googleCalendarEventId,
+      });
+    }
+
+    const { count } = await prisma.prospect.deleteMany({
+      where: { userId: session.user.id },
+    });
+
+    revalidatePath("/prospects");
+    revalidatePath("/prospects/[id]", "page");
+    revalidatePath("/taches");
+    revalidatePath("/agenda");
+    revalidatePath("/dashboard");
+    return { ok: true, data: { count } };
+  } catch (error) {
+    console.error("[deleteAllMyProspects]", error);
+    return { ok: false, error: "Impossible de supprimer les prospects" };
   }
 }

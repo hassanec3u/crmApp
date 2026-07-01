@@ -4,6 +4,7 @@
 import { HistoriqueType, TaskType } from "@prisma/client";
 import { addDays } from "date-fns";
 import { z } from "zod";
+import { revalidatePath } from "next/cache";
 
 import type { ActionResult } from "@/lib/actions/prospects";
 import { TASK_TYPE_LABELS } from "@/lib/constants/tasks";
@@ -417,5 +418,46 @@ export async function postponeTask(
   } catch (error) {
     console.error("[postponeTask]", error);
     return { ok: false, error: "Impossible de reporter la tâche" };
+  }
+}
+
+/**
+ * Supprime définitivement toutes les tâches assignées à l'utilisateur courant.
+ *
+ * Notifie n8n pour chaque RDV synchronisé avant suppression : la cascade
+ * Prisma ne déclenche aucun code applicatif, donc le nettoyage Google
+ * Calendar doit être fait explicitement ici.
+ */
+export async function deleteAllMyTasks(): Promise<ActionResult<{ count: number }>> {
+  const session = await requireSession();
+
+  try {
+    const rdvTasks = await prisma.task.findMany({
+      where: {
+        assignedUserId: session.user.id,
+        type: "RDV",
+        googleCalendarEventId: { not: null },
+      },
+      select: { id: true, googleCalendarEventId: true },
+    });
+
+    for (const task of rdvTasks) {
+      notifyGcal({
+        action: "delete",
+        taskId: task.id,
+        googleCalendarEventId: task.googleCalendarEventId,
+      });
+    }
+
+    const { count } = await prisma.task.deleteMany({
+      where: { assignedUserId: session.user.id },
+    });
+
+    revalidateTaskPaths();
+    revalidatePath("/prospects/[id]", "page");
+    return { ok: true, data: { count } };
+  } catch (error) {
+    console.error("[deleteAllMyTasks]", error);
+    return { ok: false, error: "Impossible de supprimer les tâches" };
   }
 }

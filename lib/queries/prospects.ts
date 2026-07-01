@@ -163,3 +163,8 @@ export async function getUserTags(userId: string) {
     select: { id: true, label: true, couleur: true },
   });
 }
+
+/** Nombre total de prospects appartenant à l'utilisateur. */
+export async function countAllProspectsForUser(userId: string): Promise<number> {
+  return prisma.prospect.count({ where: { userId } });
+}
