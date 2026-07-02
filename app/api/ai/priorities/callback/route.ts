@@ -10,7 +10,7 @@ const priorityEntrySchema = z.object({
   raison: z.string().trim().min(1).max(1000),
 });
 
-const bodySchema = z.array(priorityEntrySchema);
+const bodySchema = z.array(z.unknown());
 
 export async function POST(req: NextRequest): Promise<NextResponse> {
   const secret = process.env.N8N_WEBHOOK_SECRET;
@@ -37,7 +37,14 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
   let upserted = 0;
   let skipped = 0;
 
-  for (const entry of parsed.data) {
+  for (const rawEntry of parsed.data) {
+    const entryParsed = priorityEntrySchema.safeParse(rawEntry);
+    if (!entryParsed.success) {
+      skipped += 1;
+      continue;
+    }
+    const entry = entryParsed.data;
+
     const prospect = await prisma.prospect.findUnique({
       where: { id: entry.prospectId },
       select: { id: true },
