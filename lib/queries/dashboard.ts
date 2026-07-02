@@ -13,6 +13,7 @@ import {
 } from "date-fns";
 
 import { RDV_TASK_TYPES } from "@/lib/constants/tasks";
+import { STATUTS_FINAUX } from "@/lib/constants/statuts";
 import { prisma } from "@/lib/prisma";
 
 // ─── Types ───────────────────────────────────────────────────────────────────
@@ -194,14 +195,12 @@ export async function getRendezVous(userId: string): Promise<RendezVous[]> {
 export async function getProspectsARelancer(
   userId: string,
 ): Promise<ProspectARelancer[]> {
-  const excludedStatuts = ["vendu", "clôturé", "cloturé", "faux numéro"];
-
   const prospects = await prisma.prospect.findMany({
     where: {
       userId,
       statut: {
         NOT: {
-          label: { in: excludedStatuts, mode: "insensitive" },
+          label: { in: STATUTS_FINAUX, mode: "insensitive" },
         },
       },
     },
@@ -259,7 +258,7 @@ export async function getDashboardStats(
           statut: {
             NOT: {
               label: {
-                in: ["vendu", "clôturé", "cloturé", "faux numéro"],
+                in: STATUTS_FINAUX,
                 mode: "insensitive",
               },
             },
