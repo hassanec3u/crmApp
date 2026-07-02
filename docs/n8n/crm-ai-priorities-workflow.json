@@ -45,6 +45,7 @@
     },
     {
       "parameters": {
+        "mode": "runOnceForEachItem",
         "jsCode": "const agent = $json;\nconst lines = agent.prospects.map((p) => {\n  return `- id: ${p.id}\\n  nom: ${p.prenom || ''} ${p.nom}\\n  statut: ${p.statut || 'aucun'}\\n  criteres: ${JSON.stringify(p.criteres)}\\n  notes: ${p.notes || 'aucune'}\\n  tags: ${p.tags.join(', ') || 'aucun'}\\n  taches_ouvertes: ${JSON.stringify(p.tachesOuvertes)}\\n  historique_recent: ${JSON.stringify(p.historiqueRecent)}\\n  derniere_activite: ${p.derniereActivite}`;\n}).join('\\n\\n');\n\nconst prompt = `Tu es un assistant commercial immobilier. Pour chaque prospect ci-dessous, donne un score CHAUD, TIEDE ou FROID et une raison courte (1-2 phrases, en français) expliquant pourquoi le contacter aujourd'hui ou non.\\n\\nProspects:\\n${lines}\\n\\nRéponds UNIQUEMENT avec un JSON valide, un tableau d'objets {\\\"prospectId\\\": string, \\\"score\\\": \\\"CHAUD\\\"|\\\"TIEDE\\\"|\\\"FROID\\\", \\\"raison\\\": string}, sans texte autour.`;\n\nreturn [{ json: { userId: agent.userId, prompt } }];"
       },
       "id": "b1c2d3e4-0001-0001-0001-000000000005",
@@ -75,7 +76,7 @@
     },
     {
       "parameters": {
-        "jsCode": "let parsed = [];\ntry {\n  const text = $json.content?.[0]?.text || $json.text || '';\n  parsed = JSON.parse(text);\n} catch (e) {\n  // Réponse malformée : ce lot est simplement ignoré, pas de crash du workflow.\n  parsed = [];\n}\nreturn parsed.map((entry) => ({ json: entry }));"
+        "jsCode": "// Note: ce node reste en mode \"Run Once for All Items\" (pas runOnceForEachItem) car il doit\n// produire PLUSIEURS items de sortie (un par prospect, toutes agences confondues) à partir de\n// PLUSIEURS items d'entrée (un par agent) — n8n interdit de retourner un tableau en mode\n// runOnceForEachItem. On boucle donc explicitement sur $input.all() pour traiter chaque agent,\n// au lieu de ne lire que $json (qui ne référence que le premier item).\nlet parsed = [];\nfor (const item of $input.all()) {\n  const json = item.json;\n  try {\n    const text = json.message?.content?.[0]?.text || json.output?.[0]?.text || json.content?.[0]?.text || json.text || '';\n    const entries = JSON.parse(text);\n    if (Array.isArray(entries)) {\n      parsed = parsed.concat(entries);\n    }\n  } catch (e) {\n    // Réponse malformée pour cet agent : ce lot est simplement ignoré, sans faire échouer les autres agents.\n  }\n}\nreturn parsed.map((entry) => ({ json: entry }));"
       },
       "id": "b1c2d3e4-0001-0001-0001-000000000007",
       "name": "Parser la réponse",
