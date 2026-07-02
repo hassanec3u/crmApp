@@ -15,8 +15,9 @@ export const config = {
      *  - /login, /login/*
      *  - /api/auth/* (callback NextAuth)
      *  - /api/tasks/<id>/gcal (callback n8n, authentifié par bearer token, pas par session)
+     *  - /api/ai/export, /api/ai/priorities/callback (endpoints n8n, bearer token)
      *  - assets statiques (_next, favicon, images publiques)
      */
-    "/((?!login|api/auth|api/tasks/[^/]+/gcal|_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)",
+    "/((?!login|api/auth|api/tasks/[^/]+/gcal|api/ai/export|api/ai/priorities/callback|_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)",
   ],
 };
