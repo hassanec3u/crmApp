@@ -57,6 +57,13 @@ enum HistoriqueType {
   OTHER
 }
 
+/// Score de priorité commerciale calculé par l'IA pour un prospect.
+enum PriorityScore {
+  CHAUD
+  TIEDE
+  FROID
+}
+
 // ---------------------------------------------------------------------
 //  Authentification — modèles requis par NextAuth + Prisma Adapter
 //  Référence : https://authjs.dev/reference/adapter/prisma
@@ -210,6 +217,7 @@ model Prospect {
 
   tasks       Task[]
   historiques HistoriqueAction[]
+  priority    ProspectPriority?
 
   @@index([userId])
   @@index([statutId])
@@ -261,4 +269,17 @@ model HistoriqueAction {
 
   @@index([prospectId, createdAt])
   @@index([userId, createdAt])
+}
+
+/// Priorité commerciale calculée par l'IA (n8n + Claude) pour un prospect.
+/// Une ligne par prospect : le calcul du jour écrase le précédent.
+model ProspectPriority {
+  id         String        @id @default(cuid())
+  prospectId String        @unique
+  prospect   Prospect      @relation(fields: [prospectId], references: [id], onDelete: Cascade)
+  score      PriorityScore
+  raison     String        @db.Text
+  computedAt DateTime      @default(now())
+
+  @@index([score, computedAt])
 }
