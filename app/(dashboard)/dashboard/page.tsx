@@ -13,6 +13,7 @@ import {
   getProspectsARelancer,
   getDashboardStats,
 } from "@/lib/queries/dashboard";
+import { getPrioritesIA } from "@/lib/queries/ai-priorities";
 
 import { DashboardHeader } from "./_components/dashboard-header";
 import { StatsBar } from "./_components/stats-bar";
@@ -21,13 +22,14 @@ import { RemindersToday } from "./_components/reminders-today";
 import { UrgentTasks } from "./_components/urgent-tasks";
 import { UpcomingAppointments } from "./_components/upcoming-appointments";
 import { ProspectsToFollowUp } from "./_components/prospects-to-follow-up";
+import { AiPriorities } from "./_components/ai-priorities";
 
 export default async function DashboardPage(): Promise<JSX.Element> {
   const session = await getServerAuthSession();
   const userId = session!.user.id;
 
   // Chargement parallèle de toutes les données du dashboard
-  const [leads, reminders, urgentTasks, appointments, prospectsRelance, stats] =
+  const [leads, reminders, urgentTasks, appointments, prospectsRelance, stats, priorites] =
     await Promise.all([
       getLeadsDuJour(userId),
       getRappelsDuJour(userId),
@@ -35,6 +37,7 @@ export default async function DashboardPage(): Promise<JSX.Element> {
       getRendezVous(userId),
       getProspectsARelancer(userId),
       getDashboardStats(userId),
+      getPrioritesIA(userId),
     ]);
 
   return (
@@ -49,6 +52,7 @@ export default async function DashboardPage(): Promise<JSX.Element> {
       <div className="grid gap-6 lg:grid-cols-2">
         {/* Colonne gauche */}
         <div className="space-y-6">
+          <AiPriorities priorites={priorites} />
           <RemindersToday reminders={reminders} />
           <UrgentTasks tasks={urgentTasks} />
           <ProspectsToFollowUp prospects={prospectsRelance} />
